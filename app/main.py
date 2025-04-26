@@ -222,7 +222,7 @@ def runningBackendService(model ,tokenizer):
     app = create_app(model, tokenizer)
 
     print("API is now available at the ngrok URL above")
-    app.run(port=4000)
+    app.run(host="0.0.0.0", port=8080)
 
 
 def main():
