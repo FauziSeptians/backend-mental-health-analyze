@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 import pandas as pd  # Ini yang benar
 import torch
-import os
 import re
 import random
 from wordcloud import WordCloud
@@ -12,9 +11,13 @@ from model_utils import load_model_for_inference
 from huggingface_hub import login
 
 
+
 login(token='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')
 negative_sentiment_words = set()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+model, tokenizer = load_model_for_inference()
 
 def highlight_negative_words(text, important_words):
     highlighted = text
@@ -220,17 +223,7 @@ def create_app(model, tokenizer):
     print("Flask application created successfully with all endpoints configured!")
     return app
 
-def runningBackendService(model ,tokenizer):
-    print("\nRunning backend service...")
-    app = create_app(model, tokenizer)
-
-    print("API is now available at the ngrok URL above")
-    app.run(host="0.0.0.0", port=4000)
-
-
-def main():
-  model, tokenizer = load_model_for_inference()
-  runningBackendService(model ,tokenizer)
+app = create_app(model, tokenizer)
 
 if __name__ == "__main__":
-    main()
+    app.run(host="0.0.0.0", port=4000)
