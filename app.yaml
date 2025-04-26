@@ -1,8 +1,0 @@
-runtime: python39
-
-env_variables:
-   GOOGLE_APPLICATION_CREDENTIALS: "path_to_your_service_account_json_file"
-
-entrypoint: gunicorn -b :$PORT main:app
-
-instance_class: F2 # F2 is part of the free tier

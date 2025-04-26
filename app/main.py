@@ -9,7 +9,10 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import io
 from model_utils import load_model_for_inference
+from huggingface_hub import login
 
+
+login(token='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')
 negative_sentiment_words = set()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -222,7 +225,7 @@ def runningBackendService(model ,tokenizer):
     app = create_app(model, tokenizer)
 
     print("API is now available at the ngrok URL above")
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=4000)
 
 
 def main():
