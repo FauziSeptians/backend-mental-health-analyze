@@ -116,32 +116,66 @@ def analyze_mental_health_comment(text, model, tokenizer):
         "word_importances": normalized_word_importance
     }
 
-def generate_wordcloud(words_list, is_text=True, max_words=100):
-    print(f"Generating wordcloud with {len(words_list)} words...")
-    if is_text:
-        text = ' '.join(words_list)
+def generate_wordcloud_from_importance(word_importances, max_words=100, normalize=True):
+    """
+    Generate wordcloud based on actual word importance scores from NLP analysis
+    
+    Args:
+        word_importances: List of [word, importance_score] pairs
+        max_words: Maximum number of words to display
+        normalize: Whether to normalize scores (recommended for better visualization)
+    """
+    print(f"Generating scientifically valid wordcloud with {len(word_importances)} words...")
+    
+    # Convert to frequency dictionary
+    if normalize:
+        # Normalize scores to 1-100 range for better wordcloud scaling
+        scores = [score for word, score in word_importances]
+        min_score = min(scores)
+        max_score = max(scores)
+        
+        # Avoid division by zero
+        if max_score == min_score:
+            word_freq = {word: 50 for word, score in word_importances}
+        else:
+            word_freq = {
+                word: 1 + 99 * (score - min_score) / (max_score - min_score)
+                for word, score in word_importances
+            }
     else:
-        word_freq = {word: random.uniform(1, 10) for word in words_list}
-        text = None
-
+        # Use raw importance scores
+        word_freq = {word: max(score, 0.1) for word, score in word_importances}  # Ensure positive values
+    
+    print("Word frequencies for wordcloud:")
+    for word, freq in list(word_freq.items())[:5]:  # Show top 5
+        original_score = next(score for w, score in word_importances if w == word)
+        print(f"  '{word}': {freq:.2f} (original importance: {original_score})")
+    
+    # Generate wordcloud using importance-based frequencies
     wordcloud = WordCloud(
-        width=800, height=400, background_color='white',
-        max_words=max_words, contour_width=3, contour_color='steelblue'
-    ).generate(text) if is_text else WordCloud(
-        width=800, height=400, background_color='white',
-        max_words=max_words, contour_width=3, contour_color='steelblue'
+        width=1200, 
+        height=600, 
+        background_color='white',
+        max_words=max_words, 
+        contour_width=3, 
+        contour_color='steelblue',
+        colormap='viridis',  # Better color scheme for importance visualization
+        relative_scaling=0.5,  # Better size distribution
+        min_font_size=10
     ).generate_from_frequencies(word_freq)
 
+    # Create the plot
     img = io.BytesIO()
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(15, 8))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis("off")
+    plt.title("Word Importance Visualization", fontsize=16, pad=20)
     plt.tight_layout(pad=0)
-    plt.savefig(img, format='png')
+    plt.savefig(img, format='png', dpi=300, bbox_inches='tight')
     plt.close()
     img.seek(0)
-    print("Wordcloud generated successfully!")
-
+    
+    print("NLP-valid wordcloud generated successfully!")
     return img
 
 def create_app(model, tokenizer):
@@ -192,10 +226,12 @@ def create_app(model, tokenizer):
     @app.route('/generate-wordcloud', methods=['POST'])
     def create_wordcloud():
         data = request.json
-        if 'text' not in data:
-            return jsonify({"error": "No text provided"}), 400
-        print(f"Generating wordcloud for {len(negative_sentiment_words)} negative words")
-        img = generate_wordcloud(list(negative_sentiment_words), is_text=False, max_words=data.get('max_words', 100))
+        if 'array' not in data:
+            print(data['array'])
+            return jsonify({"error": "No data provided"}), 400
+        wordCloud = data['array']
+        print(wordCloud)
+        img = generate_wordcloud_from_importance(wordCloud, max_words=data.get('max_words', 100))
         print("Wordcloud generated and ready to send")
         return send_file(img, mimetype='image/png')
 
